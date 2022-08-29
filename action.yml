@@ -1,0 +1,96 @@
+name: Build and Push Docker Image to GCP
+description: Builds a docker image and pushes to artifact registry
+inputs:
+  gcp-sa-creds-json:
+    description: GCP service account credentials in JSON
+    required: true
+  name:
+    description: image name (e.g. my-app)
+    required: true
+  project:
+    description: GCP project
+    required: true
+  registry:
+    description: GCP artifact registry (e.g. us-central1-docker.pkg.dev)
+    required: true
+  repo:
+    description: path to repo within the registry/org (e.g. my-dockers)
+    required: true
+  tag_branch:
+    description: if set to a value other than "none", tag the image with the truncated branch name
+    required: true
+    default: "none"
+  tag_latest:
+    description: if set to "branch" tag with "${branch}-latest"; if set to "true" or "latest" tag with "latest"
+    required: true
+    default: "none"
+runs:
+  using: composite
+  steps:
+    - name: truncate SHA
+      uses: 2428392/gh-truncate-string-action@v1.1.0
+      id: sha
+      with:
+        stringToTruncate: ${{ github.sha }}
+        maxLength: 7
+
+    - name: truncate branch
+      if: ${{ github.ref_type == "branch" }}
+      uses: 2428392/gh-truncate-string-action@v1.1.0
+      id: branch
+      with:
+        stringToTruncate: ${{ github.ref_name }}
+        maxLength: 42
+
+    - name: checkout
+      uses: actions/checkout@v3
+
+    - name: build docker image
+      shell: bash
+      run: docker build -t ${{ inputs.name }}:${{ steps.sha.outputs.string }} .
+
+    - name: authenticate to gcp
+      uses: google-github-actions/auth@v0
+      with:
+        credentials_json: ${{ inputs.gcp-sa-creds-json }}
+
+    - name: set up gcloud sdk
+      uses: google-github-actions/setup-gcloud@v0
+
+    - name: configure docker
+      shell: bash
+      run: gcloud --quiet auth configure-docker ${{ inputs.registry }}
+
+    - name: tag sha and push
+      shell: bash
+      run: |
+        docker tag ${{ inputs.name }}:${{ steps.sha.outputs.string }} ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.sha.outputs.string }}
+        docker push ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.sha.outputs.string }}
+
+    - name: tag with tag and push
+      if: ${{ github.ref_type == "tag" }}
+      shell: bash
+      run: |
+        docker tag ${{ inputs.name }}:${{ steps.sha.outputs.string }} ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ github.ref_name }}
+        docker push ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ github.ref_name }}
+
+    - name: tag branch and push
+      if: ${{ inputs.tag_branch != 'none' }}
+      shell: bash
+      run: |
+        docker tag ${{ inputs.name }}:${{ steps.sha.outputs.string }} ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch.outputs.string }} 
+        docker push ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch.outputs.string }} 
+
+    - name: tag branch-latest and push
+      if: ${{ inputs.tag_latest == 'branch' }}
+      shell: bash
+      run: |
+        docker tag ${{ inputs.name }}:${{ steps.sha.outputs.string }} ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch.outputs.string }}-latest
+        docker push ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch.outputs.string }}-latest 
+
+    - name: tag latest and push
+      if: ${{ inputs.tag_latest == 'latest' || inputs.tag_latest == 'true' }}
+      shell: bash
+      run: |
+        docker tag ${{ inputs.name }}:${{ steps.sha.outputs.string }} ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:latest
+        docker push ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:latest 
