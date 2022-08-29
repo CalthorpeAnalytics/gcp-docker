@@ -39,7 +39,7 @@ runs:
       uses: 2428392/gh-truncate-string-action@v1.1.0
       id: branch
       with:
-        stringToTruncate: ${{ github.ref_name }}
+        stringToTruncate: ${{ github.head_ref }}
         maxLength: 42
 
     - name: checkout
