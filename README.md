@@ -25,9 +25,9 @@ requires GitHub Enterprise.
     needs: test
     steps:
       - name: build and push docker container
-        uses: CalthorpeAnalytics/gcp-docker@v0.2.1
+        uses: CalthorpeAnalytics/gcp-docker@v0.1.0
         with:
-          gcp-sa-creds-json: ${{ secrets.GCP_ENG_DOCKER_SERVICE_ACCOUNT }}
+          gcp-sa-creds-json: ${{ secrets.SERVICE_ACCOUNT }}
           name: myorg_bigapp
           project: myorg-global
           registry: us-central1-docker.pkg.dev
@@ -36,12 +36,12 @@ requires GitHub Enterprise.
           tag_latest: "branch"
 ```
 
-If the build was triggered by a branch called `xy-EXP-99999-scary-bug`, on commit
+If the build was triggered by a branch called `xy-XYZA-99999-scary-bug` on commit
 `b7e23ec29af22b0b4e41da31e868d57226121c84`, the following container image and 
 tags will be built and/or pushed:
 
 ```
 us-central1-docker.pkg.dev/myorg-global/docker/myorg_bigapp:b7e23ec
-us-central1-docker.pkg.dev/myorg-global/docker/myorg_bigapp:xy-EXP-99999-scary-bug
-us-central1-docker.pkg.dev/myorg-global/docker/myorg_bigapp:xy-EXP-99999-scary-bug-latest
+us-central1-docker.pkg.dev/myorg-global/docker/myorg_bigapp:xy-XYZA-99999-scary-bug
+us-central1-docker.pkg.dev/myorg-global/docker/myorg_bigapp:xy-XYZA-99999-scary-bug-latest
 ```
