@@ -35,7 +35,7 @@ runs:
         maxLength: 7
 
     - name: truncate branch
-      if: ${{ github.ref_type == "branch" }}
+      if: ${{ github.ref_type == 'branch' }}
       uses: 2428392/gh-truncate-string-action@v1.1.0
       id: branch
       with:
@@ -68,7 +68,7 @@ runs:
         docker push ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.sha.outputs.string }}
 
     - name: tag with tag and push
-      if: ${{ github.ref_type == "tag" }}
+      if: ${{ github.ref_type == 'tag' }}
       shell: bash
       run: |
         docker tag ${{ inputs.name }}:${{ steps.sha.outputs.string }} ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ github.ref_name }}
