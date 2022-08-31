@@ -26,7 +26,7 @@ requires GitHub Enterprise.
     needs: test
     steps:
       - name: build and push docker container
-        uses: CalthorpeAnalytics/gcp-docker@v0.1.0
+        uses: CalthorpeAnalytics/gcp-docker@v0.2.2
         with:
           gcp-sa-creds-json: ${{ secrets.SERVICE_ACCOUNT }}
           name: myorg_bigapp
