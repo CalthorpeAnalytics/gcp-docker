@@ -24,14 +24,19 @@ inputs:
     description: if set to "branch" tag with "${branch}-latest"; if set to "true" or "latest" tag with "latest"
     required: true
     default: "none"
+  tag_sha:
+    description: if set, use the provided SHA sum for tagging (defaults to GITHUB_SHA, set to "none" to disable)
+    required: true
+    default: ${{ github.sha }}
 runs:
   using: composite
   steps:
     - name: truncate SHA
+      if: ${{ inputs.tag_sha != 'none' }}
       uses: 2428392/gh-truncate-string-action@v1.1.0
       id: sha
       with:
-        stringToTruncate: ${{ github.sha }}
+        stringToTruncate: ${{ inputs.tag_sha }}
         maxLength: 7
 
     - name: truncate branch

@@ -16,6 +16,7 @@ requires GitHub Enterprise.
 * `repo` — artifact repository name (e.g. `myorg-docker`)
 * `tag_branch` — if set to a value other than "none", tag the image with the truncated branch name
 * `tag_latest` —  if set to "branch" tag with `${branch}-latest`; if set to "true" or "latest" tag with `latest`
+* `tag_sha` — if set, use the provided SHA sum for tagging (defaults to GITHUB_SHA, set to "none" to disable)
 
 ## Example
 
@@ -33,7 +34,8 @@ requires GitHub Enterprise.
           registry: us-central1-docker.pkg.dev
           repo: docker
           tag_branch: "true"
-          tag_latest: "branch"
+          tag_latest: branch
+          tag_sha: ${{ github.event.pull_request.head.sha }}
 ```
 
 If the build was triggered by a branch called `xy-XYZA-99999-scary-bug` on commit
