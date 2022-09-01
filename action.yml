@@ -39,12 +39,20 @@ runs:
         stringToTruncate: ${{ inputs.tag_sha }}
         maxLength: 7
 
-    - name: truncate branch
-      if: ${{ github.ref_type == 'branch' }}
+    - name: truncate PR branch
+      if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
       uses: 2428392/gh-truncate-string-action@v1.1.0
       id: branch
       with:
         stringToTruncate: ${{ github.head_ref }}
+        maxLength: 42
+
+    - name: truncate push branch
+      if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+      uses: 2428392/gh-truncate-string-action@v1.1.0
+      id: branch
+      with:
+        stringToTruncate: ${{ github.ref_name }}
         maxLength: 42
 
     - name: checkout
