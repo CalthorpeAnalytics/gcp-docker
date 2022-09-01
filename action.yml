@@ -42,7 +42,7 @@ runs:
     - name: truncate PR branch
       if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
       uses: 2428392/gh-truncate-string-action@v1.1.0
-      id: branch
+      id: branch_pr
       with:
         stringToTruncate: ${{ github.head_ref }}
         maxLength: 42
@@ -50,7 +50,7 @@ runs:
     - name: truncate push branch
       if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
       uses: 2428392/gh-truncate-string-action@v1.1.0
-      id: branch
+      id: branch_push
       with:
         stringToTruncate: ${{ github.ref_name }}
         maxLength: 42
@@ -87,19 +87,33 @@ runs:
         docker tag ${{ inputs.name }}:${{ steps.sha.outputs.string }} ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ github.ref_name }}
         docker push ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ github.ref_name }}
 
-    - name: tag branch and push
-      if: ${{ inputs.tag_branch != 'none' }}
+    - name: tag branch and push PR
+      if: ${{ inputs.tag_branch != 'none' && (github.event_name == 'pull_request' || github.event_name == 'pull_request_target') }}
       shell: bash
       run: |
-        docker tag ${{ inputs.name }}:${{ steps.sha.outputs.string }} ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch.outputs.string }} 
-        docker push ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch.outputs.string }} 
+        docker tag ${{ inputs.name }}:${{ steps.sha.outputs.string }} ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch_pr.outputs.string }} 
+        docker push ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch_pr.outputs.string }} 
+
+    - name: tag branch-latest and push PR
+      if: ${{ inputs.tag_latest == 'branch' && (github.event_name == 'pull_request' || github.event_name == 'pull_request_target') }}
+      shell: bash
+      run: |
+        docker tag ${{ inputs.name }}:${{ steps.sha.outputs.string }} ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch_pr.outputs.string }}-latest
+        docker push ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch_pr.outputs.string }}-latest 
+
+    - name: tag branch and push
+      if: ${{ inputs.tag_branch != 'none' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+      shell: bash
+      run: |
+        docker tag ${{ inputs.name }}:${{ steps.sha.outputs.string }} ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch_push.outputs.string }} 
+        docker push ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch_push.outputs.string }} 
 
     - name: tag branch-latest and push
-      if: ${{ inputs.tag_latest == 'branch' }}
+      if: ${{ inputs.tag_latest == 'branch' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
       shell: bash
       run: |
-        docker tag ${{ inputs.name }}:${{ steps.sha.outputs.string }} ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch.outputs.string }}-latest
-        docker push ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch.outputs.string }}-latest 
+        docker tag ${{ inputs.name }}:${{ steps.sha.outputs.string }} ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch_push.outputs.string }}-latest
+        docker push ${{ inputs.registry }}/${{ inputs.project }}/${{ inputs.repo }}/${{ inputs.name }}:${{ steps.branch_push.outputs.string }}-latest 
 
     - name: tag latest and push
       if: ${{ inputs.tag_latest == 'latest' || inputs.tag_latest == 'true' }}
