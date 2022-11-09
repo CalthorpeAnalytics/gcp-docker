@@ -2,8 +2,15 @@ name: Build and Push Docker Image to GCP
 description: Builds a docker image and pushes to artifact registry
 inputs:
   gcp-sa-creds-json:
-    description: GCP service account credentials in JSON
-    required: true
+    description: GCP service account credentials in JSON; mutually exclusive with gcp-identity-provider
+    required: false
+  gcp-identity-provider:
+    description: The identity pool provider to use for identity federation; mutually exclusive with gcp-sa-creds-json
+    required: false
+  gcp-service-account:
+    description: |-
+      The email of the service account to assume via identity federation; must be set if gcp-identity-provider is set
+    required: false
   name:
     description: image name (e.g. my-app)
     required: true
@@ -31,6 +38,28 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: validate inputs
+      uses: actions/github-script@v6
+        env:
+          gcp_sa_creds_json: ${{ inputs.gcp-sa-creds-json }}
+          gcp_identity_provider: ${{ inputs.gcp-identity-provider }}
+          gcp_service_account: ${{ inputs.gcp-service-account }}
+        with:
+          script: |
+            const { gcp_sa_creds_json, gcp_identity_provider, gcp_service_account } = process.env
+
+            if (!!gcp_sa_creds_json && !!gcp_identity_provider) {
+              core.setFailed('Exactly one of gcp-sa-creds-json or gcp-identity-provider must be specified.')
+            }
+
+            if (!gcp_sa_creds_json && !gcp_identity_provider) {
+              core.setFailed('Exactly one of gcp-sa-creds-json or gcp-identity-provider must be specified.')
+            }
+
+            if (!!gcp_identity_provider and !gcp_service_account) {
+              core.setFailed('Input gcp-service-account is required if gcp-identity-provider is specified.')
+            }
+
     - name: truncate SHA
       if: ${{ inputs.tag_sha != 'none' }}
       uses: 2428392/gh-truncate-string-action@v1.1.0
@@ -66,6 +95,8 @@ runs:
       uses: google-github-actions/auth@v0
       with:
         credentials_json: ${{ inputs.gcp-sa-creds-json }}
+        workload_identity_provider: ${{ inputs.gcp-identity-provider }}
+        service_account: ${{ inputs.gcp-service-account }}
 
     - name: set up gcloud sdk
       uses: google-github-actions/setup-gcloud@v0
