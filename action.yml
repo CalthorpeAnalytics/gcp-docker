@@ -40,25 +40,25 @@ runs:
   steps:
     - name: validate inputs
       uses: actions/github-script@v6
-        env:
-          gcp_sa_creds_json: ${{ inputs.gcp-sa-creds-json }}
-          gcp_identity_provider: ${{ inputs.gcp-identity-provider }}
-          gcp_service_account: ${{ inputs.gcp-service-account }}
-        with:
-          script: |
-            const { gcp_sa_creds_json, gcp_identity_provider, gcp_service_account } = process.env
+      env:
+        gcp_sa_creds_json: ${{ inputs.gcp-sa-creds-json }}
+        gcp_identity_provider: ${{ inputs.gcp-identity-provider }}
+        gcp_service_account: ${{ inputs.gcp-service-account }}
+      with:
+        script: |
+          const { gcp_sa_creds_json, gcp_identity_provider, gcp_service_account } = process.env
 
-            if (!!gcp_sa_creds_json && !!gcp_identity_provider) {
-              core.setFailed('Exactly one of gcp-sa-creds-json or gcp-identity-provider must be specified.')
-            }
+          if (!!gcp_sa_creds_json && !!gcp_identity_provider) {
+            core.setFailed('Exactly one of gcp-sa-creds-json or gcp-identity-provider must be specified.')
+          }
 
-            if (!gcp_sa_creds_json && !gcp_identity_provider) {
-              core.setFailed('Exactly one of gcp-sa-creds-json or gcp-identity-provider must be specified.')
-            }
+          if (!gcp_sa_creds_json && !gcp_identity_provider) {
+            core.setFailed('Exactly one of gcp-sa-creds-json or gcp-identity-provider must be specified.')
+          }
 
-            if (!!gcp_identity_provider and !gcp_service_account) {
-              core.setFailed('Input gcp-service-account is required if gcp-identity-provider is specified.')
-            }
+          if (!!gcp_identity_provider and !gcp_service_account) {
+            core.setFailed('Input gcp-service-account is required if gcp-identity-provider is specified.')
+          }
 
     - name: truncate SHA
       if: ${{ inputs.tag_sha != 'none' }}
