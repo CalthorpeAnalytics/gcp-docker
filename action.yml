@@ -56,7 +56,7 @@ runs:
             core.setFailed('Exactly one of gcp-sa-creds-json or gcp-identity-provider must be specified.')
           }
 
-          if (!!gcp_identity_provider and !gcp_service_account) {
+          if (!!gcp_identity_provider && !gcp_service_account) {
             core.setFailed('Input gcp-service-account is required if gcp-identity-provider is specified.')
           }
 
